@@ -34,4 +34,5 @@ object ExtractDomain {
       case e: Exception => null
     }
   }
+  def getUDF(): UserDefinedFunction = udf((url: String) => apply(url))
 }

@@ -59,4 +59,5 @@ object ExtractLinks {
         throw new IOException("Caught exception processing input ", e);
     }
   }
+  def getUDF(): UserDefinedFunction = udf((src: String, html: String) => apply(src, html))
 }
