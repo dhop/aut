@@ -24,15 +24,20 @@ class ScalaUDF:
     in a PySpark job. Calling add(UDFName) will create a method of the
     class instance that corresponds to the UDF in question, if it exists.
 
-    Note that Scala UDFs must first implement the getUDF() method and
-    an apply() method before they can be imported in this way.
+    Note that Scala UDFs must first implement the getUDF() method before they
+    can be imported in this way. A sample implementation would be:
+
+    def getUDF: UserDefinedFunction = udf((text: String) => apply(text))
     """
 
     def add(self, sc, udf_name):
-        def new_udf(col):
+        def new_udf(col_names):
             udf_pkg = sc._jvm.io.archivesunleashed.spark.matchbox
             udf = getattr(udf_pkg, udf_name).getUDF()
-            return Column(udf.apply(_to_seq(sc, [col], _to_java_column)))
+            # For each input column in col_names, create a seq for the UDF
+            seq_params = (_to_seq(sc, [col], _to_java_column) for col in col_names)
+            # Unpack seq parameters and apply UDF
+            return Column(udf.apply(*seq_params))
         new_udf.__doc__ = "{} is a Scala UDF imported for PySpark".format(udf_name)
         new_udf.__name__ = udf_name
         setattr(self, new_udf.__name__, new_udf)
